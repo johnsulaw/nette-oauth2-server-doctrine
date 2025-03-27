@@ -4,16 +4,30 @@ declare(strict_types=1);
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Client;
 
 use Doctrine\ORM\QueryBuilder;
-use Kdyby\Doctrine\QueryObject;
-use Kdyby\Persistence\Queryable;
 
-class ClientQuery extends QueryObject
+class ClientQuery
 {
 
 	/**
 	 * @var callable[]
 	 */
 	private $filters = [];
+
+	/**
+	 * @var \Doctrine\ORM\QueryBuilder
+	 */
+	private $qb;
+
+
+	public function __construct(
+		\Doctrine\ORM\EntityManagerInterface $em
+	)
+	{
+		$this->qb = $em
+			->getRepository(\Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientEntity::class)
+			->createQueryBuilder('c')
+			->select('c');
+	}
 
 	public function byIdentifier(string $identifier): ClientQuery
 	{
@@ -23,13 +37,13 @@ class ClientQuery extends QueryObject
 		return $this;
 	}
 
-	protected function doCreateQuery(Queryable $repository): QueryBuilder
+	public function createQuery(): \Doctrine\ORM\Query
 	{
-		$queryBuilder = $repository->createQueryBuilder()->select('c')->from(ClientEntity::class, 'c');
 		foreach ($this->filters as $filter) {
-			$filter($queryBuilder);
+			$filter($this->qb);
 		}
-		return $queryBuilder;
+		
+		return $this->qb->getQuery();
 	}
 
 }

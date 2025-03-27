@@ -161,4 +161,25 @@ class AccessTokenEntity implements AccessTokenEntityInterface
 		}
 	}
 
+	/**
+	 * Generate a JWT from the access token
+	 *
+	 * @param \League\OAuth2\Server\CryptKey $privateKey
+	 *
+	 * @return \Lcobucci\JWT\Token
+	 */
+	public function convertToJWT(\League\OAuth2\Server\CryptKey $privateKey): \Lcobucci\JWT\Token
+	{
+		return (new \Lcobucci\JWT\Builder())
+			->permittedFor($this->getClient()->getIdentifier())
+			->identifiedBy($this->getIdentifier())
+			->withHeader('jti', $this->getIdentifier())
+			->issuedAt(new \DateTimeImmutable())
+			->canOnlyBeUsedAfter(new \DateTimeImmutable())
+			->expiresAt(new \DateTimeImmutable('@' . $this->getExpiryDateTime()->getTimestamp()))
+			->relatedTo($this->getUserIdentifier())
+			->withClaim('scopes', $this->getScopes())
+			->getToken(new \Lcobucci\JWT\Signer\Rsa\Sha256(),\Lcobucci\JWT\Signer\Key\InMemory::file($privateKey->getKeyPath(), $privateKey->getPassPhrase()));
+	}
+	
 }

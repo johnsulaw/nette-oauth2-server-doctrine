@@ -4,16 +4,30 @@ declare(strict_types=1);
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\RefreshToken;
 
 use Doctrine\ORM\QueryBuilder;
-use Kdyby\Doctrine\QueryObject;
-use Kdyby\Persistence\Queryable;
 
-class RefreshTokenQuery extends QueryObject
+class RefreshTokenQuery
 {
 
 	/**
 	 * @var callable[]
 	 */
 	private $filters = [];
+
+	/**
+	 * @var \Doctrine\ORM\QueryBuilder
+	 */
+	private $qb;
+
+
+	public function __construct(
+		\Doctrine\ORM\EntityManagerInterface $em
+	)
+	{
+		$this->qb = $em
+			->getRepository(\Lookyman\NetteOAuth2Server\Storage\Doctrine\RefreshToken\RefreshTokenEntity::class)
+			->createQueryBuilder('rt')
+			->select('rt');
+	}
 
 	public function byIdentifier(string $identifier): RefreshTokenQuery
 	{
@@ -23,13 +37,14 @@ class RefreshTokenQuery extends QueryObject
 		return $this;
 	}
 
-	protected function doCreateQuery(Queryable $repository): QueryBuilder
+
+	public function createQuery(): \Doctrine\ORM\Query
 	{
-		$queryBuilder = $repository->createQueryBuilder()->select('rt')->from(RefreshTokenEntity::class, 'rt');
 		foreach ($this->filters as $filter) {
-			$filter($queryBuilder);
+			$filter($this->qb);
 		}
-		return $queryBuilder;
+		
+		return $this->qb->getQuery();
 	}
 
 }

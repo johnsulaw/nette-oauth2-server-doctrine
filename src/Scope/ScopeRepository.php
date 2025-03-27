@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope;
 
-use Kdyby\Doctrine\Registry;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 
@@ -11,18 +10,18 @@ class ScopeRepository implements ScopeRepositoryInterface
 {
 
 	/**
-	 * @var Registry
+	 * @var \Doctrine\ORM\EntityManagerInterface
 	 */
-	private $registry;
+	private $em;
 
 	/**
 	 * @var callable
 	 */
 	private $scopeFinalizer;
 
-	public function __construct(Registry $registry, ?callable $scopeFinalizer = null)
+	public function __construct(\Doctrine\ORM\EntityManagerInterface $em, ?callable $scopeFinalizer = null)
 	{
-		$this->registry = $registry;
+		$this->em = $em;
 		$this->scopeFinalizer = $scopeFinalizer ?: function (array $scopes): array {
 			return $scopes;
 		};
@@ -35,7 +34,9 @@ class ScopeRepository implements ScopeRepositoryInterface
 	public function getScopeEntityByIdentifier($identifier): ?ScopeEntity
 	{
 		/** @var ScopeEntity $entity */
-		$entity = $this->registry->getManager()->getRepository(ScopeEntity::class)->fetchOne($this->createQuery()->byIdentifier($identifier));
+		$entity = $this->em->getRepository(ScopeEntity::class)->findOneBy(
+			['identifier' => $identifier]
+		);
 		return $entity;
 	}
 
@@ -57,7 +58,7 @@ class ScopeRepository implements ScopeRepositoryInterface
 
 	protected function createQuery(): ScopeQuery
 	{
-		return new ScopeQuery();
+		return new ScopeQuery($this->em);
 	}
 
 }

@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests;
 
-use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\Registry;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AuthorizationRequestSerializer;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientEntity;
@@ -17,28 +15,58 @@ class AuthorizationRequestSerializerTest extends TestCase
 
 	public function testProcess(): void
 	{
+		$client = new ClientEntity();
+		$client->setIdentifier('clientId');
+		
+		$scope = new ScopeEntity();
+		$scope->setIdentifier('scopeId');
+		
 		$original = new AuthorizationRequest();
 		$original->setGrantTypeId('grant');
-		$original->setClient($client = new ClientEntity());
+		$original->setClient($client);
 		$original->setUser(new UserEntity('user'));
-		$original->setScopes([$scope = new ScopeEntity()]);
+		$original->setScopes([$scope]);
 		$original->setAuthorizationApproved(true);
 		$original->setRedirectUri('uri');
 		$original->setState('state');
 		$original->setCodeChallenge('cc');
 		$original->setCodeChallengeMethod('ccm');
 
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
-		$manager->expects(self::at(0))->method('detach');
-		$manager->expects(self::at(1))->method('detach');
-		$manager->expects(self::at(2))->method('merge')->with($client)->willReturn($client);
-		$manager->expects(self::at(3))->method('merge')->with($scope)->willReturn($scope);
+		$managedClient = new ClientEntity();
+		$managedClient->setIdentifier('clientId');
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::exactly(2))->method('getManager')->willReturn($manager);
+		$managedScope = new ScopeEntity();
+		$managedScope->setIdentifier('scopeId');
 
-		$serializer = new AuthorizationRequestSerializer($registry);
+		$clientRepository = $this->createMock(\Doctrine\Persistence\ObjectRepository::class);
+		$clientRepository
+			->expects(self::once())
+			->method('find')
+			->with('clientId')
+			->willReturn($managedClient);
+		
+		$scopeRepository = $this->createMock(\Doctrine\Persistence\ObjectRepository::class);
+		$scopeRepository
+			->expects(self::once())
+			->method('find')
+			->with('scopeId')
+			->willReturn($managedScope);
+		
+		$em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+		$em
+			->expects(self::exactly(2))
+			->method('getRepository')
+			->willReturnMap([
+				[ClientEntity::class, $clientRepository],
+				[ScopeEntity::class, $scopeRepository],
+			]);
+		
+		$serializer = new AuthorizationRequestSerializer($em);
 		$processed = $serializer->unserialize($serializer->serialize($original));
+
+		$original->setClient($managedClient);
+		$original->setScopes([$managedScope]);
+		
 		self::assertEquals($original, $processed);
 	}
 

@@ -3,25 +3,27 @@ decorator:
 		setup:
 			- setLogger
 
-doctrine:
-	user: 'foo'
-	password: ''
-	dbname: 'bar'
-
 extensions:
-	console: Kdyby\Console\DI\ConsoleExtension
-	events: Kdyby\Events\DI\EventsExtension
-	annotations: Kdyby\Annotations\DI\AnnotationsExtension
-	doctrine: Kdyby\Doctrine\DI\OrmExtension
+	nettrine.dbal: Nettrine\DBAL\DI\DbalExtension
+	nettrine.orm: Nettrine\ORM\DI\OrmExtension
 	oauth2: Lookyman\NetteOAuth2Server\Storage\Doctrine\NetteOAuth2ServerDoctrineExtension
+	orm.cache: Nettrine\Cache\DI\CacheExtension
+
+nettrine.dbal:
+    connection:
+        user: 'foo'
+        password: ''
+        dbname: 'bar'
+        host:
+        driver: 'pdo_mysql'
 
 oauth2:
 	grants:
-		authCode: [pkce: on]
+		authCode: [pkce: true]
 		clientCredentials: [ttl: PT2H]
-		implicit: on
-		password: on
-		refreshToken: on
+		implicit: true
+		password: true
+		refreshToken: true
 	privateKey:
 		keyPath: %appDir%/keys/private.key
 		passPhrase: foobar
@@ -38,3 +40,7 @@ services:
 	oauth2.authorizationServer:
 		setup:
 			- enableGrantType(@custom)
+
+	oauth2.presenter:
+		class: Lookyman\NetteOAuth2Server\UI\OAuth2Presenter
+		autowired: false

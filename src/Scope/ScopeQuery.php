@@ -4,16 +4,30 @@ declare(strict_types=1);
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope;
 
 use Doctrine\ORM\QueryBuilder;
-use Kdyby\Doctrine\QueryObject;
-use Kdyby\Persistence\Queryable;
 
-class ScopeQuery extends QueryObject
+class ScopeQuery
 {
 
 	/**
 	 * @var callable[]
 	 */
 	private $filters = [];
+	
+	/**
+	 * @var \Doctrine\ORM\QueryBuilder
+	 */
+	private $qb;
+
+
+	public function __construct(
+		\Doctrine\ORM\EntityManagerInterface $em
+	)
+	{
+		$this->qb = $em
+			->getRepository(\Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope\ScopeEntity::class)
+			->createQueryBuilder('s')
+			->select('s');
+	}
 
 	public function byIdentifier(string $identifier): ScopeQuery
 	{
@@ -23,13 +37,14 @@ class ScopeQuery extends QueryObject
 		return $this;
 	}
 
-	protected function doCreateQuery(Queryable $repository): QueryBuilder
+
+	public function createQuery(): \Doctrine\ORM\Query
 	{
-		$queryBuilder = $repository->createQueryBuilder()->select('s')->from(ScopeEntity::class, 's');
 		foreach ($this->filters as $filter) {
-			$filter($queryBuilder);
+			$filter($this->qb);
 		}
-		return $queryBuilder;
+		
+		return $this->qb->getQuery();
 	}
 
 }
