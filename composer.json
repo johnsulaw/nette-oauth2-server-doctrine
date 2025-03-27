@@ -17,7 +17,7 @@
     "league/oauth2-server": "^7.0",
     "nette/application": "~3.0.0",
     "nette/di": "3.0.2",
-    "lookyman/nette-oauth2-server": "^3.0",
+    "lookyman/nette-oauth2-server": "dev-nette-3-compatibility",
     "nette/caching": "~3.0.0"
   },
   "require-dev": {
@@ -34,6 +34,10 @@
     {
       "type": "vcs",
       "url": "https://github.com/peckadesign/doctrine"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/johnsulaw/nette-oauth2-server"
     }
   ],
   "autoload": {
