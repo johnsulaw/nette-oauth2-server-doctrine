@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken;
 
-use Kdyby\Doctrine\Registry;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
@@ -13,13 +12,13 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 {
 
 	/**
-	 * @var Registry
+	 * @var \Doctrine\ORM\EntityManagerInterface
 	 */
-	private $registry;
+	private $em;
 
-	public function __construct(Registry $registry)
+	public function __construct(\Doctrine\ORM\EntityManagerInterface $em)
 	{
-		$this->registry = $registry;
+		$this->em = $em;
 	}
 
 	/**
@@ -41,9 +40,8 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 	public function persistNewAccessToken(AccessTokenEntityInterface $accessTokenEntity): void
 	{
 		if ($accessTokenEntity instanceof AccessTokenEntity) {
-			$manager = $this->registry->getManager();
-			$manager->persist($accessTokenEntity);
-			$manager->flush();
+			$this->em->persist($accessTokenEntity);
+			$this->em->flush();
 		}
 	}
 
@@ -53,12 +51,11 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 	 */
 	public function revokeAccessToken($tokenId): void
 	{
-		$manager = $this->registry->getManager();
 		/** @var AccessTokenEntity|null $accessTokenEntity */
-		$accessTokenEntity = $manager->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
 		if ($accessTokenEntity !== null) {
 			$accessTokenEntity->setRevoked(true);
-			$manager->flush();
+			$this->em->flush();
 		}
 	}
 
@@ -69,7 +66,7 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 	public function isAccessTokenRevoked($tokenId): bool
 	{
 		/** @var AccessTokenEntity|null $accessTokenEntity */
-		$accessTokenEntity = $this->registry->getManager()->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
 		return $accessTokenEntity !== null ? $accessTokenEntity->isRevoked() : true;
 	}
 
