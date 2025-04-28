@@ -12,13 +12,13 @@
   ],
   "require": {
     "php": "^7.1",
-    "kdyby/doctrine": "dev-nette-24-a-30-vol2",
-    "kdyby/events": "~4.0.0",
     "league/oauth2-server": "^7.0",
     "nette/application": "~3.0.0",
     "nette/di": "3.0.2",
     "lookyman/nette-oauth2-server": "dev-nette-3-compatibility",
-    "nette/caching": "~3.0.0"
+    "nette/caching": "~3.0.0",
+    "nettrine/dbal": "^0.7.0",
+    "nettrine/orm": "^0.8.0"
   },
   "require-dev": {
     "nette/bootstrap": "~3.0.0",

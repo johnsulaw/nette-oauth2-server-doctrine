@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine;
 
-use Kdyby\Doctrine\DI\IEntityProvider;
-use Kdyby\Events\DI\EventsExtension;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\Grant\AuthCodeGrant;
@@ -29,7 +27,7 @@ use Nette\DI\CompilerExtension;
 use Nette\DI\Statement;
 use Nette\Utils\Validators;
 
-class NetteOAuth2ServerDoctrineExtension extends CompilerExtension implements IEntityProvider
+class NetteOAuth2ServerDoctrineExtension extends CompilerExtension
 {
 
 	/**
@@ -60,12 +58,10 @@ class NetteOAuth2ServerDoctrineExtension extends CompilerExtension implements IE
 		// Table mapping & Login redirection
 		Validators::assertField($config, 'tablePrefix', 'string');
 		$builder->addDefinition($this->prefix('tablePrefixSubscriber'))
-			->setFactory(TablePrefixSubscriber::class, [$config['tablePrefix']])
-			->addTag(EventsExtension::TAG_SUBSCRIBER);
+			->setFactory(TablePrefixSubscriber::class, [$config['tablePrefix']]);
 		Validators::assertField($config, 'loginEventPriority', 'integer');
 		$builder->addDefinition($this->prefix('loginSubscriber'))
-			->setFactory(LoginSubscriber::class, ['priority' => $config['loginEventPriority']])
-			->addTag(EventsExtension::TAG_SUBSCRIBER);
+			->setFactory(LoginSubscriber::class, ['priority' => $config['loginEventPriority']]);
 
 		// Common repositories
 		$builder->addDefinition($this->prefix('repository.accessToken'))

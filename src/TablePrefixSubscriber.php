@@ -5,16 +5,13 @@ namespace Lookyman\NetteOAuth2Server\Storage\Doctrine;
 
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Kdyby\Doctrine\Events;
-use Kdyby\Doctrine\Mapping\ClassMetadata;
-use Kdyby\Events\Subscriber;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken\AccessTokenEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AuthCode\AuthCodeEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\RefreshToken\RefreshTokenEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope\ScopeEntity;
 
-class TablePrefixSubscriber implements Subscriber
+class TablePrefixSubscriber implements \Doctrine\Common\EventSubscriber
 {
 
 	public const DEFAULT_PREFIX = 'nette_oauth2_server_';
@@ -39,7 +36,6 @@ class TablePrefixSubscriber implements Subscriber
 
 	public function loadClassMetadata(LoadClassMetadataEventArgs $eventArgs): void
 	{
-		/** @var ClassMetadata $metadata */
 		$metadata = $eventArgs->getClassMetadata();
 		if (in_array($metadata->getName(), self::ENTITIES, true)) {
 			$metadata->setPrimaryTable([
@@ -61,7 +57,7 @@ class TablePrefixSubscriber implements Subscriber
 	 */
 	public function getSubscribedEvents(): array
 	{
-		return [Events::loadClassMetadata];
+		return [\Doctrine\ORM\Events::loadClassMetadata];
 	}
 
 	protected static function getPrefixedName(string $prefix, string $name): string
