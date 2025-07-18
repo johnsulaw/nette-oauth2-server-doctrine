@@ -34,7 +34,9 @@ class ScopeRepository implements ScopeRepositoryInterface
 	public function getScopeEntityByIdentifier($identifier): ?ScopeEntity
 	{
 		/** @var ScopeEntity $entity */
-		$entity = $this->em->getRepository(ScopeEntity::class)->fetchOne($this->createQuery()->byIdentifier($identifier));
+		$entity = $this->em->getRepository(ScopeEntity::class)->findOneBy(
+			['identifier' => $identifier]
+		);
 		return $entity;
 	}
 
@@ -56,7 +58,7 @@ class ScopeRepository implements ScopeRepositoryInterface
 
 	protected function createQuery(): ScopeQuery
 	{
-		return new ScopeQuery();
+		return new ScopeQuery($this->em);
 	}
 
 }

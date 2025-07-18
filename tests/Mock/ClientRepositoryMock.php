@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests\Mock;
 
-use Kdyby\Doctrine\Registry;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientQuery;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientRepository;
 
@@ -15,10 +14,9 @@ class ClientRepositoryMock extends ClientRepository
 	 */
 	private $query;
 
-	public function __construct(ClientQuery $query, Registry $registry, ?callable $secretValidator = null)
+	public function __construct(\Doctrine\ORM\EntityManagerInterface $manager, ?callable $secretValidator = null)
 	{
-		parent::__construct($registry, $secretValidator);
-		$this->query = $query;
+		parent::__construct($manager, $secretValidator);
 	}
 
 	protected function createQuery(): ClientQuery

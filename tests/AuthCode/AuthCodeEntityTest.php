@@ -15,7 +15,7 @@ class AuthCodeEntityTest extends TestCase
 	{
 		$entity = new AuthCodeEntity();
 		self::assertFalse($entity->isRevoked());
-		self::assertInternalType('array', $entity->getScopes());
+		self::assertIsArray($entity->getScopes());
 		self::assertCount(0, $entity->getScopes());
 
 		self::assertNull($entity->getId());
@@ -74,7 +74,7 @@ class AuthCodeEntityTest extends TestCase
 	{
 		$entity = new AuthCodeEntity();
 		$entity->addScope($scope = new ScopeEntity());
-		self::assertInternalType('array', $scopes = $entity->getScopes());
+		self::assertIsArray($scopes = $entity->getScopes());
 		self::assertCount(1, $scopes);
 		self::assertSame($scope, array_pop($scopes));
 	}

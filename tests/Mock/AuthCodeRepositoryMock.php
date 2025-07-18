@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests\Mock;
 
-use Kdyby\Doctrine\Registry;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AuthCode\AuthCodeQuery;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AuthCode\AuthCodeRepository;
 
@@ -15,10 +14,9 @@ class AuthCodeRepositoryMock extends AuthCodeRepository
 	 */
 	private $query;
 
-	public function __construct(AuthCodeQuery $query, Registry $registry)
+	public function __construct(\Doctrine\ORM\EntityManagerInterface $registry)
 	{
 		parent::__construct($registry);
-		$this->query = $query;
 	}
 
 	protected function createQuery(): AuthCodeQuery

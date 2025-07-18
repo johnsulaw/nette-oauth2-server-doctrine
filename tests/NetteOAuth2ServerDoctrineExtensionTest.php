@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests;
 
-use Kdyby\Doctrine\Events;
-use Kdyby\Events\DI\EventsExtension;
-use Kdyby\Events\EventManager;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
@@ -45,9 +42,9 @@ class NetteOAuth2ServerDoctrineExtensionTest extends TestCase
 		$ref = new \ReflectionProperty($tablePrefixListener, 'prefix');
 		$ref->setAccessible(true);
 		self::assertEquals('test_', $ref->getValue($tablePrefixListener));
-		/** @var EventManager $eventManager */
-		$eventManager = $container->getByType(EventManager::class);
-		$listeners = $eventManager->getListeners(Events::loadClassMetadata);
+		/** @var \Doctrine\Common\EventManager $eventManager */
+		$eventManager = $container->getByType(\Doctrine\Common\EventManager::class);
+		$listeners = $eventManager->getListeners(\Doctrine\ORM\Events::loadClassMetadata);
 		self::assertSame($tablePrefixListener, array_pop($listeners));
 
 		$container->getByType(AccessTokenRepositoryInterface::class);
@@ -61,7 +58,7 @@ class NetteOAuth2ServerDoctrineExtensionTest extends TestCase
 		$authorizationServer = $container->getByType(AuthorizationServer::class);
 		$ref = new \ReflectionProperty($authorizationServer, 'privateKey');
 		$ref->setAccessible(true);
-		self::assertRegExp('#/keys/private\.key$#', $ref->getValue($authorizationServer)->getKeyPath());
+		self::assertMatchesRegularExpression('#/keys/private\.key$#', $ref->getValue($authorizationServer)->getKeyPath());
 		$ref = new \ReflectionProperty($authorizationServer, 'encryptionKey');
 		$ref->setAccessible(true);
 		self::assertSame('ziVrR/ktyjH0499H1sG6B/dUvEEqLEUfDRp0n0ND/34=', $ref->getValue($authorizationServer));
@@ -70,7 +67,7 @@ class NetteOAuth2ServerDoctrineExtensionTest extends TestCase
 		$resourceServer = $container->getByType(ResourceServer::class);
 		$ref = new \ReflectionProperty($resourceServer, 'publicKey');
 		$ref->setAccessible(true);
-		self::assertRegExp('#/keys/public\.key$#', $ref->getValue($resourceServer)->getKeyPath());
+		self::assertMatchesRegularExpression('#/keys/public\.key$#', $ref->getValue($resourceServer)->getKeyPath());
 
 		$container->getByType(AuthCodeGrant::class);
 		$container->getByType(ClientCredentialsGrant::class);
@@ -90,14 +87,28 @@ class NetteOAuth2ServerDoctrineExtensionTest extends TestCase
 		self::assertArrayHasKey('custom', $grants);
 
 		$container->getByType(LoginSubscriber::class);
+		
+		/** @var \Doctrine\Common\EventManager $eventManager */
+		$eventManager = $container->getByType(\Doctrine\Common\EventManager::class);
+		
+		$foundLoginSubscriber = false;
+		$foundTablePrefixSubscriber = false;
+		
+		foreach ($eventManager->getListeners() as $listeners) {
+			foreach ($listeners as $listener) {
+				if ($listener instanceof \Lookyman\NetteOAuth2Server\User\LoginSubscriber) {
+					$foundLoginSubscriber = true;
+				}
+				if ($listener instanceof \Lookyman\NetteOAuth2Server\Storage\Doctrine\TablePrefixSubscriber) {
+					$foundTablePrefixSubscriber = true;
+				}
+			}
+		}
+		
+		self::assertTrue($foundLoginSubscriber);
+		self::assertTrue($foundTablePrefixSubscriber);
 
-		$subscribers = $container->findByTag(EventsExtension::TAG_SUBSCRIBER);
-		self::assertArrayHasKey('oauth2.loginSubscriber', $subscribers);
-		self::assertArrayHasKey('oauth2.tablePrefixSubscriber', $subscribers);
-		self::assertInstanceOf(LoginSubscriber::class, $container->getService('oauth2.loginSubscriber'));
-		self::assertInstanceOf(TablePrefixSubscriber::class, $container->getService('oauth2.tablePrefixSubscriber'));
-
-		self::assertInstanceOf(OAuth2Presenter::class, $container->getByType(OAuth2Presenter::class));
+		self::assertInstanceOf(OAuth2Presenter::class, $container->getService('oauth2.presenter'));
 		self::assertInstanceOf(ApproveControlFactory::class, $container->getByType(IApproveControlFactory::class));
 		self::assertInstanceOf(AuthorizationRequestSerializer::class, $container->getByType(IAuthorizationRequestSerializer::class));
 

@@ -36,7 +36,9 @@ class ClientRepository implements ClientRepositoryInterface
 	public function getClientEntity($clientIdentifier, $grantType = null, $clientSecret = null, $mustValidateSecret = true): ?ClientEntity
 	{
 		/** @var ClientEntity|null $clientEntity */
-		$clientEntity = $this->em->getRepository(ClientEntity::class)->fetchOne($this->createQuery()->byIdentifier($clientIdentifier));
+		$clientEntity = $this->em->getRepository(ClientEntity::class)->findOneBy(
+			['identifier' => $clientIdentifier]
+		);
 		return $clientEntity !== null
 			&& $mustValidateSecret
 			&& $clientEntity->getSecret() !== null
@@ -47,7 +49,7 @@ class ClientRepository implements ClientRepositoryInterface
 
 	protected function createQuery(): ClientQuery
 	{
-		return new ClientQuery();
+		return new ClientQuery($this->em);
 	}
 
 }

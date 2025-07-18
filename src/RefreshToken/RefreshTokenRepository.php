@@ -39,7 +39,9 @@ class RefreshTokenRepository implements RefreshTokenRepositoryInterface
 	public function revokeRefreshToken($tokenId): void
 	{
 		/** @var RefreshTokenEntity|null $refreshTokenEntity */
-		$refreshTokenEntity = $this->em->getRepository(RefreshTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$refreshTokenEntity = $this->em->getRepository(RefreshTokenEntity::class)->findOneBy(
+			['identifier' => $tokenId]
+		);
 		if ($refreshTokenEntity !== null) {
 			$refreshTokenEntity->setRevoked(true);
 			$this->em->flush();
@@ -53,13 +55,15 @@ class RefreshTokenRepository implements RefreshTokenRepositoryInterface
 	public function isRefreshTokenRevoked($tokenId): bool
 	{
 		/** @var RefreshTokenEntity|null $refreshTokenEntity */
-		$refreshTokenEntity = $this->em->getRepository(RefreshTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$refreshTokenEntity = $this->em->getRepository(RefreshTokenEntity::class)->findOneBy(
+			['identifier' => $tokenId]
+		);
 		return $refreshTokenEntity !== null ? $refreshTokenEntity->isRevoked() : true;
 	}
 
 	protected function createQuery(): RefreshTokenQuery
 	{
-		return new RefreshTokenQuery();
+		return new RefreshTokenQuery($this->em);
 	}
 
 }

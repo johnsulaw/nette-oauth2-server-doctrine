@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests\Client;
 
-use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\EntityRepository;
-use Kdyby\Doctrine\Registry;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientQuery;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests\Mock\ClientRepositoryMock;
@@ -17,22 +14,16 @@ class ClientRepositoryTest extends TestCase
 	public function testGetClientEntityPublic(): void
 	{
 		$client = new ClientEntity();
-		$client->setSecret('secret');
+		$client->setSecret('secret');;
 
-		$query = $this->getMockBuilder(ClientQuery::class)->disableOriginalConstructor()->getMock();
-		$query->expects(self::once())->method('byIdentifier')->with('id')->willReturn($query);
+		$entityRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)->disableOriginalConstructor()->getMock();
+		$entityRepo->expects(self::once())->method('findOneBy')->with(['identifier' => 'id'])->willReturn($client);
 
-		$entityRepo = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
-		$entityRepo->expects(self::once())->method('fetchOne')->with($query)->willReturn($client);
-
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = $this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock();
 		$manager->expects(self::once())->method('getRepository')->with(ClientEntity::class)->willReturn($entityRepo);
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
 		$called = false;
-		$repository = new ClientRepositoryMock($query, $registry, function () use (&$called): void {
+		$repository = new ClientRepositoryMock($manager, function () use (&$called): void {
 			$called = true;
 		});
 		self::assertSame($client, $repository->getClientEntity('id', 'grant', 'secret', false));
@@ -44,19 +35,13 @@ class ClientRepositoryTest extends TestCase
 		$client = new ClientEntity();
 		$client->setSecret('secret');
 
-		$query = $this->getMockBuilder(ClientQuery::class)->disableOriginalConstructor()->getMock();
-		$query->expects(self::once())->method('byIdentifier')->with('id')->willReturn($query);
+		$entityRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)->disableOriginalConstructor()->getMock();
+		$entityRepo->expects(self::once())->method('findOneBy')->with(['identifier' => 'id'])->willReturn($client);
 
-		$entityRepo = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
-		$entityRepo->expects(self::once())->method('fetchOne')->with($query)->willReturn($client);
-
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = $this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock();
 		$manager->expects(self::once())->method('getRepository')->with(ClientEntity::class)->willReturn($entityRepo);
-
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
-		$repository = new ClientRepositoryMock($query, $registry);
+		
+		$repository = new ClientRepositoryMock($manager);
 		self::assertSame($client, $repository->getClientEntity('id', 'grant', 'secret', true));
 	}
 
@@ -65,31 +50,17 @@ class ClientRepositoryTest extends TestCase
 		$client = new ClientEntity();
 		$client->setSecret('secret');
 
-		$query = $this->getMockBuilder(ClientQuery::class)->disableOriginalConstructor()->getMock();
-		$query->expects(self::once())->method('byIdentifier')->with('id')->willReturn($query);
+		$entityRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)->disableOriginalConstructor()->getMock();
+		$entityRepo->expects(self::once())->method('findOneBy')->with(['identifier' => 'id'])->willReturn($client);
 
-		$entityRepo = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
-		$entityRepo->expects(self::once())->method('fetchOne')->with($query)->willReturn($client);
-
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = $this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock();
 		$manager->expects(self::once())->method('getRepository')->with(ClientEntity::class)->willReturn($entityRepo);
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
-		$repository = new ClientRepositoryMock($query, $registry, function (): bool {
+		$repository = new ClientRepositoryMock($manager, function (): bool {
 			return false;
 		});
 		self::assertNull($repository->getClientEntity('id', 'grant', 'secret', true));
 	}
 
-	public function testCreateQuery(): void
-	{
-		$repository = new ClientRepositoryMock(
-			$this->getMockBuilder(ClientQuery::class)->disableOriginalConstructor()->getMock(),
-			$this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock()
-		);
-		self::assertInstanceOf(ClientQuery::class, $repository->createQueryOriginal());
-	}
 
 }

@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests\AccessToken;
 
-use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\EntityRepository;
-use Kdyby\Doctrine\Registry;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken\AccessTokenEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken\AccessTokenQuery;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken\AccessTokenRepository;
@@ -19,12 +16,12 @@ class AccessTokenRepositoryTest extends TestCase
 
 	public function testGetNewToken(): void
 	{
-		$repository = new AccessTokenRepository($this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock());
+		$repository = new AccessTokenRepository($this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock());
 		$token = $repository->getNewToken($client = new ClientEntity(), [$scope = new ScopeEntity()], 'uid');
 
 		self::assertInstanceOf(AccessTokenEntity::class, $token);
 		self::assertSame($client, $token->getClient());
-		self::assertInternalType('array', $scopes = $token->getScopes());
+		self::assertIsArray($scopes = $token->getScopes());
 		self::assertCount(1, $scopes);
 		self::assertSame($scope, array_pop($scopes));
 		self::assertEquals('uid', $token->getUserIdentifier());
@@ -34,14 +31,11 @@ class AccessTokenRepositoryTest extends TestCase
 	{
 		$token = new AccessTokenEntity();
 
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = self::createMock(\Doctrine\ORM\EntityManagerInterface::class);
 		$manager->expects(self::once())->method('persist')->with($token);
 		$manager->expects(self::once())->method('flush');
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
-		$repository = new AccessTokenRepository($registry);
+		$repository = new AccessTokenRepository($manager);
 		$repository->persistNewAccessToken($token);
 	}
 
@@ -49,20 +43,14 @@ class AccessTokenRepositoryTest extends TestCase
 	{
 		$token = new AccessTokenEntity();
 
-		$query = $this->getMockBuilder(AccessTokenQuery::class)->disableOriginalConstructor()->getMock();
-		$query->expects(self::once())->method('byIdentifier')->with('id')->willReturn($query);
+		$entityRepo = self::createMock(\Doctrine\ORM\EntityRepository::class);
+		$entityRepo->expects(self::once())->method('findOneBy')->with(['identifier' => 'id'])->willReturn($token);
 
-		$entityRepo = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
-		$entityRepo->expects(self::once())->method('fetchOne')->with($query)->willReturn($token);
-
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = $this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock();
 		$manager->expects(self::once())->method('getRepository')->with(AccessTokenEntity::class)->willReturn($entityRepo);
 		$manager->expects(self::once())->method('flush');
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
-		$repository = new AccessTokenRepositoryMock($query, $registry);
+		$repository = new AccessTokenRepositoryMock($manager);
 		$repository->revokeAccessToken('id');
 
 		self::assertTrue($token->isRevoked());
@@ -73,29 +61,14 @@ class AccessTokenRepositoryTest extends TestCase
 		$token = new AccessTokenEntity();
 		$token->setRevoked(true);
 
-		$query = $this->getMockBuilder(AccessTokenQuery::class)->disableOriginalConstructor()->getMock();
-		$query->expects(self::once())->method('byIdentifier')->with('id')->willReturn($query);
+		$entityRepo = $this->getMockBuilder(\Doctrine\ORM\EntityRepository::class)->disableOriginalConstructor()->getMock();
+		$entityRepo->expects(self::once())->method('findOneBy')->with(['identifier' => 'id'])->willReturn($token);
 
-		$entityRepo = $this->getMockBuilder(EntityRepository::class)->disableOriginalConstructor()->getMock();
-		$entityRepo->expects(self::once())->method('fetchOne')->with($query)->willReturn($token);
-
-		$manager = $this->getMockBuilder(EntityManager::class)->disableOriginalConstructor()->getMock();
+		$manager = $this->getMockBuilder(\Doctrine\ORM\EntityManagerInterface::class)->disableOriginalConstructor()->getMock();
 		$manager->expects(self::once())->method('getRepository')->with(AccessTokenEntity::class)->willReturn($entityRepo);
 
-		$registry = $this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock();
-		$registry->expects(self::once())->method('getManager')->willReturn($manager);
-
-		$repository = new AccessTokenRepositoryMock($query, $registry);
+		$repository = new AccessTokenRepositoryMock($manager);
 		self::assertTrue($repository->isAccessTokenRevoked('id'));
-	}
-
-	public function testCreateQuery(): void
-	{
-		$repository = new AccessTokenRepositoryMock(
-			$this->getMockBuilder(AccessTokenQuery::class)->disableOriginalConstructor()->getMock(),
-			$this->getMockBuilder(Registry::class)->disableOriginalConstructor()->getMock()
-		);
-		self::assertInstanceOf(AccessTokenQuery::class, $repository->createQueryOriginal());
 	}
 
 }

@@ -39,7 +39,9 @@ class AuthCodeRepository implements AuthCodeRepositoryInterface
 	public function revokeAuthCode($codeId): void
 	{
 		/** @var AuthCodeEntity|null $authCodeEntity */
-		$authCodeEntity = $this->em->getRepository(AuthCodeEntity::class)->fetchOne($this->createQuery()->byIdentifier($codeId));
+		$authCodeEntity = $this->em->getRepository(AuthCodeEntity::class)->findOneBy(
+			['identifier' => $codeId]
+		);
 		if ($authCodeEntity !== null) {
 			$authCodeEntity->setRevoked(true);
 			$this->em->flush();
@@ -53,13 +55,15 @@ class AuthCodeRepository implements AuthCodeRepositoryInterface
 	public function isAuthCodeRevoked($codeId): bool
 	{
 		/** @var AuthCodeEntity|null $authCodeEntity */
-		$authCodeEntity = $this->em->getRepository(AuthCodeEntity::class)->fetchOne($this->createQuery()->byIdentifier($codeId));
+		$authCodeEntity = $this->em->getRepository(AuthCodeEntity::class)->findOneBy(
+			['identifier' => $codeId]
+		);
 		return $authCodeEntity !== null ? $authCodeEntity->isRevoked() : true;
 	}
 
 	protected function createQuery(): AuthCodeQuery
 	{
-		return new AuthCodeQuery();
+		return new AuthCodeQuery($this->em);
 	}
 
 }

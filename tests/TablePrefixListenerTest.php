@@ -6,7 +6,6 @@ namespace Lookyman\NetteOAuth2Server\Storage\Doctrine\Tests;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
-use Kdyby\Doctrine\Events;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AccessToken\AccessTokenEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\AuthCode\AuthCodeEntity;
 use Lookyman\NetteOAuth2Server\Storage\Doctrine\Client\ClientEntity;
@@ -21,7 +20,7 @@ class TablePrefixListenerTest extends TestCase
 	public function testGetSubscribedEvents(): void
 	{
 		$listener = new TablePrefixSubscriber('');
-		self::assertEquals([Events::loadClassMetadata], $listener->getSubscribedEvents());
+		self::assertEquals([\Doctrine\ORM\Events::loadClassMetadata], $listener->getSubscribedEvents());
 	}
 
 	/**

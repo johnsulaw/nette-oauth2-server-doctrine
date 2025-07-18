@@ -52,7 +52,9 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 	public function revokeAccessToken($tokenId): void
 	{
 		/** @var AccessTokenEntity|null $accessTokenEntity */
-		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->findOneBy(
+			['identifier' => $tokenId]
+		);
 		if ($accessTokenEntity !== null) {
 			$accessTokenEntity->setRevoked(true);
 			$this->em->flush();
@@ -66,13 +68,10 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
 	public function isAccessTokenRevoked($tokenId): bool
 	{
 		/** @var AccessTokenEntity|null $accessTokenEntity */
-		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->fetchOne($this->createQuery()->byIdentifier($tokenId));
+		$accessTokenEntity = $this->em->getRepository(AccessTokenEntity::class)->findOneBy(
+			['identifier' => $tokenId]
+		);
 		return $accessTokenEntity !== null ? $accessTokenEntity->isRevoked() : true;
-	}
-
-	protected function createQuery(): AccessTokenQuery
-	{
-		return new AccessTokenQuery();
 	}
 
 }
