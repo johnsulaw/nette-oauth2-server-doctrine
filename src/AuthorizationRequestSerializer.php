@@ -41,7 +41,7 @@ class AuthorizationRequestSerializer implements IAuthorizationRequestSerializer
 		$client = $authorizationRequest->getClient();
 		if ($client !== null) {
 			$clientId = $client->getIdentifier();
-			$managedClient = $this->em->getRepository(ClientEntity::class)->find($clientId);
+			$managedClient = $this->em->getRepository(ClientEntity::class)->findBy(['identifier' => $clientId]);
 			
 			if ($managedClient === null) {
 				throw new \RuntimeException("Client with ID '$clientId' not found.");
@@ -53,7 +53,7 @@ class AuthorizationRequestSerializer implements IAuthorizationRequestSerializer
 		$managedScopes = [];
 		foreach ($authorizationRequest->getScopes() as $scope) {
 			$scopeId = $scope->getIdentifier();
-			$managedScope = $this->em->getRepository(\Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope\ScopeEntity::class)->find($scopeId);
+			$managedScope = $this->em->getRepository(\Lookyman\NetteOAuth2Server\Storage\Doctrine\Scope\ScopeEntity::class)->findBy(['identifier' => $scopeId]);
 			
 			if ($managedScope === null) {
 				throw new \RuntimeException("Scope with ID '$scopeId' not found.");
